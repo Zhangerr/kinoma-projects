@@ -1,7 +1,7 @@
 //@program
 //UI design question: which should dictate the interface, the text box or the slider? which one should be more authoritative and have control? Could have  text box update slider too though, ddeep integration
 //is it intuitive to have temperatures adjust to the scale of the newly selected temperatures? maybe should reset to neutral...
-var THEME = require('themes/flat/theme');
+var THEME = require('theme');
 var BUTTONS = require('controls/buttons');
 var KEYBOARD = require('mobile/keyboard');
 var CONTROL = require('mobile/control');
@@ -10,15 +10,15 @@ var inputScale = "F";
 var outputScale = "K";
 var titleStyle = new Style({font:"bold 20px", color:"black"});
 var tempLabel = new Label({left: 0, right: 0, string: "23", editable:true, style: titleStyle});
-var convertLabel = new Label({left: 0, right: 0, string: "23", style: titleStyle});
-var nameInputSkin = new Skin({ borders: { left:2, right:2, top:2, bottom:2 }, stroke: 'gray',});
-var fieldStyle = new Style({ color: 'black', font: 'bold 24px', horizontal: 'left', vertical: 'middle', left: 5, right: 5, top: 5, bottom: 5, });
-var fieldHintStyle = new Style({ color: '#aaa', font: '24px', horizontal: 'left', vertical: 'middle', left: 5, right: 5, top: 5, bottom: 5, });
+var convertLabel = new Label({left: 0, right: 10, width:30, style: titleStyle});
+var nameInputSkin = new Skin({ borders: { left:2, right:2, top:2, bottom:2 }, stroke: 'black',});
+var fieldStyle = new Style({ color: 'black', font: 'bold 24px', horizontal: 'middle', vertical: 'middle', left: 5, right: 5, top: 5, bottom: 5, });
+var fieldHintStyle = new Style({ color: '#aaa', font: '24px', horizontal: 'middle', vertical: 'middle', left: 5, right: 5, top: 5, bottom: 5, });
 var whiteSkin = new Skin({fill:"white"});
 var MyField = Container.template(function($) { return { 
-  width: 100, height: 36, skin: nameInputSkin, contents: [
+  width:60, height: 36, right:10, skin: nameInputSkin, contents: [
     Scroller($, { 
-      left: 4, right: 4, top: 4, bottom: 4, active: true, 
+      left: 0, right: 0, top: 0, bottom: 0, active: true, 
       behavior: Object.create(CONTROL.FieldScrollerBehavior.prototype), clip: true, contents: [
         Label($, { 
           left: 0, top: 0, bottom: 0, style: fieldStyle, anchor: 'NAME',
@@ -43,7 +43,6 @@ var MyField = Container.template(function($) { return {
 }});
 var dataz = {name:""};
 var field = new MyField(dataz);
-trace(JSON.stringify(dataz));
 scales = {}
 /**
 from: function that converts from the specified scale to Kelvin
@@ -69,7 +68,7 @@ function convert(val, inScale, outScale) {
 //would be smarter if it could chain, like it knows F->C and C->K so then F->K
 //lookup F converions for K, then pick one, check that one for conversions to K, pick random, keep going? no... only allow one conversion
 //F->C maybe C->D D->K, follow chain, else throw error; have maps of what the scale transforms to? probably too complex, but it could have a object associated with all it's conversions? eh new Scale("F", {"C":function(val){ return 1.8*val/32;}})
-
+addScale("R", function(val) {return (val - 491.67)/1.8 + 273.15;}, function(val) {return (val-273.15)*1.8 + 491.67;}, "Rankine", 0, 300);
 addScale("D", function(val) {return (373.15 - (val*(2/3)))}, function(val) {return (373.15 - val)*1.5}, "Delisle", 0, 150);
 addScale("C", function(val) {return val + 273.15;}, function(val) { return val - 273.15; }, "Celsius", -273.15, 100);
 addScale("K", function(val) {return val;}, function(val) {return val;}, "Kelvin", 0, 300);
@@ -80,12 +79,12 @@ var RadioGroup2 = Line.template(function($) { return {
 	behavior: BUTTONS.RadioGroupBehavior
 }});
 var MySlider = SLIDERS.HorizontalSlider.template(function($){ return{
-   left:50, right:50,top:0, bottom:0,
+   left:0, right:0,
   behavior: Object.create(SLIDERS.HorizontalSliderBehavior.prototype, {
     onValueChanged: { value: function(container){
       SLIDERS.HorizontalSliderBehavior.prototype.onValueChanged.call(this, container);
 		updateLabels(this.data.value);
-      trace("Value is: " + this.data.value + "\n");
+     
   }}})
 }});
 
@@ -103,7 +102,7 @@ var slider = new MySlider({ min:0, max:1, value:.5, });
 //buttno group would be preferable to radio group, implemeement that if have time
 
 var MyRadioGroup = RadioGroup2.template(function($) { return {
-	top:0, bottom:0, left:0, right:0, waga:$.id,
+	top:0, bottom:0, left:10, right:0, waga:$.id,
 	behavior: Object.create(BUTTONS.RadioGroupBehavior.prototype, {
 	//what does this object with value do, why can't i do this without it
 		onGroupButtonSelected: {value:function(column, labeledButton)  {
@@ -151,14 +150,14 @@ for (var key in scales) {
 var radioGroup = new MyRadioGroup({id:1, buttonNames: options.join()});
 var radioGroup2 = new MyRadioGroup({id:2, buttonNames: options.join(), selected:"K"});
 
-
-
 var columns = new Column({
 	left:0, right:0, top:0, bottom:0, skin:whiteSkin, contents: [
 	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#d8e7f3"}), contents: [new Label({left:0, top:0, right:0, bottom:0, string:"Temperature Converter", style:new Style({font:"bold 30px", color:"black"})})]}),
-	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#b2cee6"}), contents: [new Container({top:0, left:0, right:0, bottom:0, contents: [radioGroup]}),
+	new Line({left:0,  right:0,  height:30, skin:new Skin({fill:"#d8e7f3",borders: {  bottom:2 }, stroke: 'black'}),contents:[new Label({left: 10, string: "Input Scale", horizontal: "left", style: titleStyle})]}),
+	new Line({ left:0, right:0, height: 80, skin:new Skin({fill:"#b2cee6"}), contents: [new Container({top:0, left:0, right:0, bottom:0, contents: [radioGroup]}),
 		field]}),
-	new Line({ left:0, right:0, top:0, bottom:0, skin:new Skin({fill:"#8db6d8"}), contents:[slider]}),
+	new Line({ left:0, right:0, height:50, skin:new Skin({fill:"#b2cee6"}), contents:[slider]}),
+	new Line({left:0,  right:0,  height:30, skin:new Skin({fill:"#b2cee6",borders: {  bottom:2 }, stroke: 'black'}),contents:[new Label({left: 10, string: "Output Scale", horizontal: "left", style: titleStyle})]}),
 	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#689dca"}),contents: [new Container({top:0, left:0, right:0, bottom:0, contents:[radioGroup2]}), convertLabel]}) //obscure error message thrown when including same object twice
 	], behavior:Object.create(Column.prototype, {
     onTouchEnded: { value: function(content){
