@@ -1,4 +1,6 @@
 //@program
+//UI design question: which should dictate the interface, the text box or the slider? which one should be more authoritative and have control? Could have  text box update slider too though, ddeep integration
+//is it intuitive to have temperatures adjust to the scale of the newly selected temperatures? maybe should reset to neutral...
 var THEME = require('themes/flat/theme');
 var BUTTONS = require('controls/buttons');
 var KEYBOARD = require('mobile/keyboard');
@@ -6,7 +8,6 @@ var CONTROL = require('mobile/control');
 var SLIDERS = require('controls/sliders');
 var inputScale = "F";
 var outputScale = "K";
-var text = "ok";
 var titleStyle = new Style({font:"bold 20px", color:"black"});
 var tempLabel = new Label({left: 0, right: 0, string: "23", editable:true, style: titleStyle});
 var convertLabel = new Label({left: 0, right: 0, string: "23", style: titleStyle});
@@ -74,7 +75,6 @@ addScale("C", function(val) {return val + 273.15;}, function(val) { return val -
 addScale("K", function(val) {return val;}, function(val) {return val;}, "Kelvin", 0, 300);
 addScale("F", function(val) {return (val - 32)/1.8 + 273.15;}, function(val) {return (val - 273.15)*1.8 + 32;}, "Fahrenheit", 0, 100);
 
-assertEqual(convert(32, "F", "C"), 0, "32 F = 0 C");
 var RadioGroup2 = Line.template(function($) { return {
 	active: true,
 	behavior: BUTTONS.RadioGroupBehavior
@@ -88,6 +88,7 @@ var MySlider = SLIDERS.HorizontalSlider.template(function($){ return{
       trace("Value is: " + this.data.value + "\n");
   }}})
 }});
+
 function updateLabels(val) {
       var realValue = scales[inputScale].low + val* (scales[inputScale].high-scales[inputScale].low);
       tempLabel.string = (Math.round(realValue*100)/100).toString();
@@ -132,57 +133,13 @@ var MyRadioGroup = RadioGroup2.template(function($) { return {
 
 //how did that guy get qUnit working??
 
-function assertEqual(a, b, message) {
-	if (message === undefined) {
-		message = a + ", " + b;
-	}
-	if (a != b) {
-		trace("Test failure: " + message + "\n");
-	}
-}
-function assertNotEqual(a, b, message) {
-	if (message === undefined) {
-		message = a + ", " + b;
-	}
-	if (a == b) {
-		trace("Test failure: " + message + "\n");
-	}
-}
-function assertTrue(cond, message) {
-	if (message === undefined) {
-		message = cond;
-	}
-	if (!cond) {
-		trace("Test failure: " + message + "\n");
-	}
-}
-function assertFalse(cond, message) {
-	if (message === undefined) {
-		message = cond;
-	}
-	if (cond) {
-		trace("Test failure: " + message + "\n");
-	}
-}
-
 
 
 //figure out coordinate system and when left right top bottom width height are required
 //figure out grid system, read docs more in depth on how platform work
 //coordinates seem to be relative to it's layout position in the parent
-var skinA = new Skin({fill:"white"});
-var skinB = new Skin({fill:"blue"});
-var red = new Skin({fill:"rgb(220,220,255)"});
-var teal = new Skin({fill:"rgb(210,210,255)"});
 
-var colA = new Column({
-	left:0, right:0, top:0, bottom:0, skin:skinA, contents: [ 
-		new Line({ top:0, bottom:0, left:0, right:0, skin:skinB, contents: [new Content({top:0, bottom:0, left:0, right:0, skin:teal}), 
-		new Content({top:0, bottom:0, left:0, right:0, skin:red})]}),
-		new Line({ height:40, left:0, right:0, skin:skinA}),
-		new Line({top:0, bottom:0, left:0, right:0, skin:teal})
-	]
-});
+
 var options = [];
 for (var key in scales) {
 	if (scales.hasOwnProperty(key)) {
@@ -195,13 +152,14 @@ var radioGroup = new MyRadioGroup({id:1, buttonNames: options.join()});
 var radioGroup2 = new MyRadioGroup({id:2, buttonNames: options.join(), selected:"K"});
 
 
+
 var columns = new Column({
-	left:0, right:0, top:0, bottom:0, skin:skinA, contents: [
-	new Line({top:0, bottom:0, left:0, right:0, contents: [new Label({left:0, top:0, right:0, bottom:0, string:"Temperature Converter", style:titleStyle})]}),
-	new Line({top:0, bottom:0, left:0, right:0, contents: [new Container({top:0, left:0, right:0, bottom:0, contents: [radioGroup], skin:red}),
+	left:0, right:0, top:0, bottom:0, skin:whiteSkin, contents: [
+	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#d8e7f3"}), contents: [new Label({left:0, top:0, right:0, bottom:0, string:"Temperature Converter", style:new Style({font:"bold 30px", color:"black"})})]}),
+	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#b2cee6"}), contents: [new Container({top:0, left:0, right:0, bottom:0, contents: [radioGroup]}),
 		field]}),
-	new Container({top:0, left:0, right:0, bottom:0, skin:teal, contents:[slider]}),
-	new Line({top:0, bottom:0, left:0, right:0, contents: [new Container({top:0, left:0, right:0, bottom:0, skin:skinA, contents:[radioGroup2]}), convertLabel]}) //obscure error message thrown when including same object twice
+	new Line({ left:0, right:0, top:0, bottom:0, skin:new Skin({fill:"#8db6d8"}), contents:[slider]}),
+	new Line({top:0, bottom:0, left:0, right:0, skin:new Skin({fill:"#689dca"}),contents: [new Container({top:0, left:0, right:0, bottom:0, contents:[radioGroup2]}), convertLabel]}) //obscure error message thrown when including same object twice
 	], behavior:Object.create(Column.prototype, {
     onTouchEnded: { value: function(content){
       KEYBOARD.hide();
@@ -210,5 +168,4 @@ var columns = new Column({
   }), active:true
 	
 });
-//new Label({left:0, right:0, height: 40, string:"hello", style:titleStyle})
 application.add(columns);
